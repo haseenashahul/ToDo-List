@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block "main" %}
+
+<h1 style="font-family: 'Georgia', serif; color: #2c3e50;">ToDo</h1>
+<div class="d-flex justify-content-end mt-3 me-3">
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">Add Task</button>
+
+  <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Add New Task</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="add_task" method="POST">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="title" class="col-form-label">Title:</label>
+              <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            <div class="mb-3">
+              <label for="description" class="col-form-label">Description:</label>
+              <textarea class="form-control" id="description" name="description"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="status" class="col-form-label">Status:</label>
+              <select class="form-select" id="status" name="status">
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Complete</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+ <!-- JavaScript to detect success parameter and display alert -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      alert('Task is added successfully!');
+      const currentUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, currentUrl);
+    }
+  });
+</script>
+
+
+<table class="table table-striped table-hover">
+  <thead>
+      <tr>
+          <th scope="col">#</th>
+          <th scope="col">Title</th>
+          <th scope="col">Description</th>
+          <th scope="col">Status</th>
+          <th scope="col">Created At</th> 
+          <th scope="col">Actions</th>
+
+      </tr>
+  </thead>
+  <tbody>
+      {% for task in tasks %}
+      <tr>
+          <th scope="row">{{ forloop.counter }}</th>
+          <td>{{ task.title }}</td>
+          <td>{{ task.description }}</td>
+          <td>{{ task.get_status_display }}</td>
+          <td>{{ task.created_at|date:"M d, Y H:i" }}</td>
+          <td>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal{{ task.id }}">
+              <i class="bi bi-pencil"></i>
+            </button>
+
+            <form action="{% url 'delete_task' task.id %}" method="POST" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Task" onclick="return confirm('Are you sure you want to delete this task?');">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form> 
+          </td>
+      </tr>
+
+
+      <!-- Edit Task Modal for Each Task -->
+    <div class="modal fade" id="editTaskModal{{ task.id }}" tabindex="-1" aria-labelledby="editTaskModalLabel{{ task.id }}" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="editTaskModalLabel{{ task.id }}">Edit Task</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form action="{% url 'edit_task' task.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="title{{ task.id }}" class="col-form-label">Title:</label>
+                <input type="text" class="form-control" id="title{{ task.id }}" name="title" value="{{ task.title }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="description{{ task.id }}" class="col-form-label">Description:</label>
+                <textarea class="form-control" id="description{{ task.id }}" name="description">{{ task.description }}</textarea>
+              </div>
+              <div class="mb-3">
+                <label for="status{{ task.id }}" class="col-form-label">Status:</label>
+                <select class="form-select" id="status{{ task.id }}" name="status">
+                  <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
+                  <option value="in-progress" {% if task.status == 'in-progress' %}selected{% endif %}>In Progress</option>
+                  <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Complete</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <tr>
+      <td colspan="6" class="text-center">No tasks available</td>
+    </tr>
+      {% endfor %}
+  </tbody>
+</table>
+
+ 
+{% endblock  %}
